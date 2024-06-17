@@ -99,15 +99,21 @@ const QuizComponent = () => {
     }
   };
 
-  const handleAnswerClick = (option) => {
-    if (isAnswered) return;
+  
 
+
+  const handleAnswerClick = (option) => {
+    if (selectedAnswer === option) {
+      // Deselect if the same option is clicked again
+      setSelectedAnswer(null);
+    } else {
+      // Select the new option
+      setSelectedAnswer(option);
+    }
+  
     const currentQuestion = quizData.quizData[selectedQuiz].questions[currentQuestionIndex];
     const isCorrect = option === currentQuestion.answer;
-
-    setSelectedAnswer(option);
-    setIsAnswered(true);
-
+  
     const answerDetails = {
       question: currentQuestion.question,
       selectedOption: option,
@@ -116,14 +122,24 @@ const QuizComponent = () => {
       isCorrect: isCorrect,
       options: currentQuestion.options,
     };
-
-    setAnswersData([...answersData, answerDetails]);
-
-    if (isCorrect) {
-      setScore(score + 1);
+  
+    // Update answers data
+    const updatedAnswersData = answersData.filter(
+      (answer) => answer.question !== currentQuestion.question
+    );
+  
+    setAnswersData([...updatedAnswersData, answerDetails]);
+  
+    // Update score
+    if (isCorrect && selectedAnswer !== option) {
+      setScore((prevScore) => prevScore + 1);
+    } else if (!isCorrect && selectedAnswer === currentQuestion.answer) {
+      setScore((prevScore) => prevScore - 1);
     }
   };
-
+  
+      
+  
   const handleNextQuestion = () => {
     if (currentQuestionIndex < quizData.quizData[selectedQuiz].questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -177,74 +193,74 @@ const QuizComponent = () => {
 console.log(isQuizCompleted , "quiz completed")
   return (
     <div className="quiz-container">
-      {!selectedQuiz ? (
-        <Hero onSelectQuiz={setSelectedQuiz} />
-      ) : !isFullScreen ? (
-        <FullScreenCompo handleFullScreen={handleFullScreen} handleReset={handleReset}/>
-      ) : !isQuizCompleted ? (
-        <>
-          <div className="quiz-timer">
-            <div className="question-timer">
-              <CircularProgressbar
-                value={questionTimeLeft}
-                maxValue={60}
-                text={`${questionTimeLeft}s`}
-                styles={buildStyles({
-                  pathColor: getTimerColor(questionTimeLeft),
-                  textColor: '#fff',
-                  trailColor: '#ddd',
-                })}
-              />
-            </div>
-            <div className="total-timer">
-              <CircularProgressbar
-                value={totalTimeLeft}
-                maxValue={600}
-                text={`${Math.floor(totalTimeLeft / 60)}:${totalTimeLeft % 60}`}
-                styles={buildStyles({
-                  pathColor: getTimerColor(totalTimeLeft),
-                  textColor: '#fff',
-                  trailColor: '#ddd',
-                })}
-              />
-            </div>
-          </div>
-          <div className="question-section">
-            <h2>Question {currentQuestionIndex + 1}</h2>
-            <p>{currentQuestion.question}</p>
-            <div className="options">
-              {currentQuestion.options.map(option => (
-                <button
-                  key={option}
-                  className={`option-button button-17
-                    ${isAnswered && option === currentQuestion.answer ? 'correct' : ''}
-                    ${isAnswered && option !== currentQuestion.answer && option === selectedAnswer ? 'incorrect' : ''}
-                    ${option === selectedAnswer ? 'selected' : ''}`}
-                  onClick={() => handleAnswerClick(option)}
-                  disabled={isAnswered}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-            <div>
-              <button  className='button-85' onClick={handleReset}>Reset</button>
-            </div>
-            {isAnswered && (
-              <div className="explanation">
-                {currentQuestionIndex < quizData.quizData[selectedQuiz].questions.length - 1 ? (
-                  <button onClick={handleNextQuestion}>Next Question</button>
-                ) : (
-                  <button onClick={handleSubmitQuiz}>Submit Quiz</button>
-                )}
-              </div>
+  {!selectedQuiz ? (
+    <Hero onSelectQuiz={setSelectedQuiz} />
+  ) : !isFullScreen ? (
+    <FullScreenCompo handleFullScreen={handleFullScreen} handleReset={handleReset}/>
+  ) : !isQuizCompleted ? (
+    <>
+      <div className="quiz-timer">
+        <div className="question-timer">
+          <CircularProgressbar
+            value={questionTimeLeft}
+            maxValue={60}
+            text={`${questionTimeLeft}s`}
+            styles={buildStyles({
+              pathColor: getTimerColor(questionTimeLeft),
+              textColor: '#fff',
+              trailColor: '#ddd',
+            })}
+          />
+        </div>
+        <div className="total-timer">
+          <CircularProgressbar
+            value={totalTimeLeft}
+            maxValue={600}
+            text={`${Math.floor(totalTimeLeft / 60)}:${totalTimeLeft % 60}`}
+            styles={buildStyles({
+              pathColor: getTimerColor(totalTimeLeft),
+              textColor: '#fff',
+              trailColor: '#ddd',
+            })}
+          />
+        </div>
+      </div>
+      <div className="question-section">
+        <h2>Question {currentQuestionIndex + 1}</h2>
+        <p>{currentQuestion.question}</p>
+        <div className="options">
+          {currentQuestion.options.map((option) => (
+            <button
+              key={option}
+              className={`option-button button-17
+                ${isAnswered && option === currentQuestion.answer ? 'correct' : ''}
+                ${isAnswered && option !== currentQuestion.answer && option === selectedAnswer ? 'incorrect' : ''}
+                ${option === selectedAnswer ? 'selected' : ''}`}
+              onClick={() => handleAnswerClick(option)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+        <div>
+          <button className="button-85" onClick={handleReset}>Reset</button>
+        </div>
+        {selectedAnswer && (
+          <div className="navigation-buttons">
+            {currentQuestionIndex < quizData.quizData[selectedQuiz].questions.length - 1 ? (
+              <button onClick={handleNextQuestion}>Next Question</button>
+            ) : (
+              <button onClick={handleSubmitQuiz}>Submit Quiz</button>
             )}
           </div>
-        </>
-      ) : (
-        <ScoreCard score={score} totalQuestions={quizData.quizData[selectedQuiz].questions.length} answersData={answersData} />
-      )}
-    </div>
+        )}
+      </div>
+    </>
+  ) : (
+    <ScoreCard score={score} totalQuestions={quizData.quizData[selectedQuiz].questions.length} answersData={answersData} />
+  )}
+</div>
+
   );
 };
 
